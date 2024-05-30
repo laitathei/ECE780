@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class numerical_IK:
-    def __init__(self, link_length, joint_angle, target_position):
+    def __init__(self, method, link_length, joint_angle, target_position):
+        self.method = method
         self.link_length = link_length # Initial link
         self.l1 = self.link_length[0]
         self.l2 = self.link_length[1]
@@ -39,7 +40,8 @@ class numerical_IK:
         # Calculate Inverse Kinematics
         current_iteration = 0
         error = float('inf')
-        self.trajectory = []
+        error_list = []
+        iternation_list = []
         while (current_iteration < max_iteration) and (error > epsilon):
             # Calculate current position by current theta angle
             current_position = self.FK()
@@ -50,14 +52,14 @@ class numerical_IK:
             # Break while loop when the error smaller than the minimum error requirement
             if np.linalg.norm(error) < epsilon:
                 break
-
-            # Compute the Jacobian Transpose
-            # J = self.J()
-            # J = J.T
-
-            # Compute the Jacobian Pseudo-Inverse
+            
             J = self.J()
-            J = np.linalg.pinv(J) # both right and left pseudo inverse solved by SVD
+            if self.method == 1:
+                # Compute the Jacobian Transpose
+                J = J.T
+            elif self.method == 2:
+                # Compute the Jacobian Pseudo-Inverse
+                J = np.linalg.pinv(J) # both right and left pseudo inverse solved by SVD
             
             d_theta = gamma * J @ error
 
@@ -69,10 +71,15 @@ class numerical_IK:
 
             # Update iteration
             current_iteration += 1
+            iternation_list.append(current_iteration)
             error = np.linalg.norm(error)
-
+            error_list.append(error)
+            
             # Plot the movement
             self.plot_robot()
+
+        # Plot error
+        self.plot_error(iternation_list, error_list)
 
         print("IK calculation finish")
         print("Iteration time: ", current_iteration)
@@ -90,25 +97,34 @@ class numerical_IK:
         y2 = y1 + self.l2 * np.sin(self.theta1 + self.theta2)
         x3 = x2 + self.l3 * np.cos(self.theta1 + self.theta2 + self.theta3)
         y3 = y2 + self.l3 * np.sin(self.theta1 + self.theta2 + self.theta3)
-        
-        plt.plot([x0, x1], [y0, y1], 'b-', label='Link 1' if plt.gca().get_legend_handles_labels()[1] == [] else "")
-        plt.plot([x1, x2], [y1, y2], 'g-', label='Link 2' if plt.gca().get_legend_handles_labels()[1] == [] else "")
-        plt.plot([x2, x3], [y2, y3], 'm-', label='Link 3' if plt.gca().get_legend_handles_labels()[1] == [] else "")
-        plt.plot([x0, x1, x2, x3], [y0, y1, y2, y3], 'ro')
+
+        plt.plot([x0, x1], [y0, y1], 'b-', label='Link 1')
+        plt.plot([x1, x2], [y1, y2], 'g-', label='Link 2')
+        plt.plot([x2, x3], [y2, y3], 'm-', label='Link 3')
+        plt.plot([x0, x1, x2, x3], [y0, y1, y2, y3], 'ro', label='Joint')
         
         plt.xlim(-self.max_length, self.max_length)
         plt.ylim(-self.max_length, self.max_length)
-        plt.plot(self.target_position[0], self.target_position[1], 'yo', label='Desired Position' if plt.gca().get_legend_handles_labels()[1] == [] else "")
+        plt.plot(self.target_position[0], self.target_position[1], 'yo', label='Desired Position')
         
-        if plt.gca().get_legend_handles_labels()[1] == []:
-            plt.legend()
-        
+        plt.legend()
         plt.draw()
         plt.pause(0.01)
         plt.clf()
 
+    def plot_error(sefl, iteration, error):
+        plt.plot(iteration, error)
+        plt.xlabel('Iteration')
+        plt.ylabel('Error')
+        plt.title(f'Error over each iteration')
+        plt.grid(True)
+        plt.show()
+        
+# method 1 = Jacobian Transpose
+# method 2 = Jacobian Pseudo-Inverse
+method = 2 
 link_length = np.array([3.0, 4.0, 5.0], dtype=float)
 joint_angle = np.array([0, 0, 0], dtype=float)
-target_position = np.array([5, 7, np.pi/4], dtype=float)
-RRR_manipulator = numerical_IK(link_length, joint_angle, target_position)
+target_position = np.array([7, 5, np.pi/4], dtype=float)
+RRR_manipulator = numerical_IK(method, link_length, joint_angle, target_position)
 RRR_manipulator.IK()
