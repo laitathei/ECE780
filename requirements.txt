@@ -1,0 +1,6 @@
+pip3 install --upgrade pip
+pip3 install -U pip setuptools
+pip3 install virtualenv
+pip3 install paho-mqtt
+pip3 install numpy qpsolvers
+pip3 install pynput
