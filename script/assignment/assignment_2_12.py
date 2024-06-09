@@ -21,8 +21,8 @@ class manipulator_control:
         self.Fv22 = 0.1
         self.dt = 0.01 # delta time
         self.T = 20.0 # simulation time
-        self.omega = 1.0/self.dt # natural frequency
-        self.zeta = 1.0 # damping ratio =
+        self.omega = 5 # natural frequency
+        self.zeta = 0.5 # damping ratio
 
     def get_dynamics(self, q, q_dot):
         """
@@ -234,7 +234,7 @@ Kd = 2.0
 friction = True
 inverse_dynamic = True
 torque_bound = True
-torque_limit = 0.5 # 0.5 or 0.1
+torque_limit = 0.1 # 0.5 or 0.1
 sim.main(Kp, Ki, Kd, friction, inverse_dynamic, torque_bound, torque_limit)
 
 # Q1 PID controller, friction = False, inverse_dynamic = False, torque_bound = False
