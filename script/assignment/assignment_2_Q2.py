@@ -251,40 +251,40 @@ class manipulator_control:
         plt.plot(self.xd[0][0], self.xd[1][0], 'yo', label='Desired Position')
         
         plt.legend()
+        plt.savefig('script\\assignment\\assignment_2_picture\\assignment_2_Q2_robotic_arm.png')
         plt.draw()
         plt.pause(0.01)
         plt.clf()
 
     def plot_graph(self, q1_list, q2_list, tau1_list, tau2_list, iternation_list, pos_x_list, pos_y_list):
         # plot trajectory
-        plt.subplot(3, 1, 1)
-        plt.plot(iternation_list, q1_list, label='q1') # joint angle 1
-        plt.plot(iternation_list, q2_list, label='q2') # joint angle 2
-        plt.axhline(y=qd[0], color='r', linestyle='--', label='qd1') # joint velocity 1
-        plt.axhline(y=qd[1], color='g', linestyle='--', label='qd2') # joint velocity 2
-        plt.xlabel('Time [{}s]'.format(self.dt))
-        plt.ylabel('Joint Angles [rad]')
-        plt.legend()
+        fig, axs = plt.subplots(3, 1, figsize=(12, 6))
+        axs[0].plot(iternation_list, q1_list, label='q1') # joint angle 1
+        axs[0].plot(iternation_list, q2_list, label='q2') # joint angle 2
+        axs[0].axhline(y=qd[0], color='r', linestyle='--', label='qd1') # joint velocity 1
+        axs[0].axhline(y=qd[1], color='g', linestyle='--', label='qd2') # joint velocity 2
+        axs[0].set_xlabel('Time [{}s]'.format(self.dt))
+        axs[0].set_ylabel('Joint Angles [rad]')
+        axs[0].legend()
 
         # plot torque
-        plt.subplot(3, 1, 2)
-        plt.plot(iternation_list, tau1_list, label='tau1') # joint torque 1
-        plt.plot(iternation_list, tau2_list, label='tau2') # joint torque 2
-        plt.xlabel('Time [{}s]'.format(self.dt))
-        plt.ylabel('Joint Torques [Nm]')
-        plt.legend()
+        axs[1].plot(iternation_list, tau1_list, label='tau1') # joint torque 1
+        axs[1].plot(iternation_list, tau2_list, label='tau2') # joint torque 2
+        axs[1].set_xlabel('Time [{}s]'.format(self.dt))
+        axs[1].set_ylabel('Joint Torques [Nm]')
+        axs[1].legend()
 
         # plot position
-        plt.subplot(3, 1, 3)
-        plt.plot(iternation_list, pos_x_list, label='current x') # current position x
-        plt.plot(iternation_list, pos_y_list, label='current y') # current position y
-        plt.axhline(y=self.xd[0], color='r', linestyle='--', label='desired x') # desired position x
-        plt.axhline(y=self.xd[1], color='g', linestyle='--', label='desired y') # desired position y
-        plt.xlabel('Time [{}s]'.format(self.dt))
-        plt.ylabel('Position [m]')
-        plt.legend()
+        axs[2].plot(iternation_list, pos_x_list, label='current x') # current position x
+        axs[2].plot(iternation_list, pos_y_list, label='current y') # current position y
+        axs[2].axhline(y=self.xd[0], color='r', linestyle='--', label='desired x') # desired position x
+        axs[2].axhline(y=self.xd[1], color='g', linestyle='--', label='desired y') # desired position y
+        axs[2].set_xlabel('Time [{}s]'.format(self.dt))
+        axs[2].set_ylabel('Position [m]')
+        axs[2].legend()
 
         plt.tight_layout()
+        plt.savefig('script\\assignment\\assignment_2_picture\\assignment_2_Q2_joint_angle_torque_position.png')
         plt.show()
 
 L = np.array([[1.0], [0.5]], dtype=float) # length of each link
@@ -303,5 +303,5 @@ xd_dot = np.array([[0], [0]], dtype=float) # desired end-effector velocity
 sim = manipulator_control(L, ML, IL, D, qd, qd_dot, q, q_dot, q_dot_dot, x, x_dot, xd, xd_dot)
 omega = 5 # natural frequency
 zeta = 0.5 # damping ratio
-torque_limit = 0.5 # 0.5 for Q2a or 0.1 for Q2b
+torque_limit = 0.1 # 0.5 for Q2a or 0.1 for Q2b
 sim.main(omega, zeta, torque_limit)

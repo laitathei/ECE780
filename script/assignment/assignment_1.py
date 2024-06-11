@@ -108,6 +108,7 @@ class numerical_IK:
         plt.plot(self.target_position[0], self.target_position[1], 'yo', label='Desired Position')
         
         plt.legend()
+        plt.savefig('script\\assignment\\assignment_1_picture\\assignment_1_Q1bi_robotic_arm.png')
         plt.draw()
         plt.pause(0.01)
         plt.clf()
@@ -118,13 +119,14 @@ class numerical_IK:
         plt.ylabel('Error')
         plt.title(f'Error over each iteration')
         plt.grid(True)
+        plt.savefig('script\\assignment\\assignment_1_picture\\assignment_1_Q1bi_error.png')
         plt.show()
         
 # method 1 = Jacobian Transpose
 # method 2 = Jacobian Pseudo-Inverse
-method = 2 
+method = 2
 link_length = np.array([3.0, 4.0, 5.0], dtype=float)
 joint_angle = np.array([0, 0, 0], dtype=float)
-target_position = np.array([7, 5, np.pi/4], dtype=float)
+target_position = np.array([6, 5, np.pi/4], dtype=float)
 RRR_manipulator = numerical_IK(method, link_length, joint_angle, target_position)
 RRR_manipulator.IK()

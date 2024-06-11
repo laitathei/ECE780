@@ -267,6 +267,7 @@ class manipulator_control:
         plt.plot(self.xd[0][0], self.xd[1][0], 'yo', label='Desired Position')
         
         plt.legend()
+        plt.savefig('script\\assignment\\assignment_2_picture\\assignment_2_Q3ii_robotic_arm.png')
         plt.draw()
         plt.pause(0.01)
         plt.clf()
@@ -309,6 +310,7 @@ class manipulator_control:
         axs[1, 1].legend()
 
         plt.tight_layout()
+        plt.savefig('script\\assignment\\assignment_2_picture\\assignment_2_Q3ii_joint_angle_force_torque_position.png')
         plt.show()
 
 L = np.array([[1.0], [0.5]], dtype=float) # length of each link
