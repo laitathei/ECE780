@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from progress.bar import Bar
 
 class manipulator_control:
-    def __init__(self, L, ML, IL, D, qd, qd_dot, qd_dot_dot, q, q_dot, q_dot_dot):
+    def __init__(self, L, ML, IL, D, qd, qd_dot, q, q_dot, q_dot_dot, x, x_dot, xd, xd_dot):
         # RR manipulator situation
         self.L = L # length of each link
         self.ML = ML # mass of each link
@@ -10,19 +11,22 @@ class manipulator_control:
         self.IL = IL # inertia of each link
         self.qd = qd # desired joint anlge
         self.qd_dot = qd_dot # desired joint velocity
-        self.qd_dot_dot = qd_dot_dot # desired joint acceleration
         self.q = q # initial joint anlge
         self.q_dot = q_dot # initial joint velocity
         self.q_dot_dot = q_dot_dot # initial joint acceleration
+
+        self.x = x # end-effector position
+        self.x_dot = x_dot # end-effector velocity
+        self.xd = xd # desired end-effector position
+        self.xd_dot = xd_dot # desired end-effector velocity
         self.g = 9.81 # gravity
         self.Fc11 = 0
         self.Fc22 = 0
         self.Fv11 = 0.1
         self.Fv22 = 0.1
         self.dt = 0.01 # delta time
-        self.T = 20.0 # simulation time
-        self.omega = 5 # natural frequency
-        self.zeta = 0.5 # damping ratio
+        self.T = 10.0 # simulation time
+        self.max_length = self.L[0][0] + self.L[1][0] # maximum length
 
     def get_dynamics(self, q, q_dot):
         """
@@ -33,7 +37,8 @@ class manipulator_control:
         :returns: 
             - D (np.ndarray) - Inertia matrix
             - C (np.ndarray) - Centrifugal and Coriolis matrix
-            - F (np.ndarray) - Friction matrix
+            - Fc (np.ndarray) - Coulomb friction matrix
+            - Fv (np.ndarray) - Viscous friction matrix
             - G (np.ndarray) - Gravity compensation
         """
         ML1, ML2 = self.ML[0][0], self.ML[1][0] # mass of each link
@@ -126,76 +131,126 @@ class manipulator_control:
 
         return D, C, Fc, Fv, G
 
-    def main(self, Kp, Ki, Kd, friction, inverse_dynamic, torque_bound, torque_limit):
-        if inverse_dynamic == True:
-            self.Kp = np.diag(np.array([pow(self.omega,2), pow(self.omega,2)])) # pow(omega,2)
-            self.Ki = np.diag(np.array([Ki, Ki]))
-            self.Kd = np.diag(np.array([2*self.zeta*self.omega, 2*self.zeta*self.omega])) # 2*zeta*omega
-        else:
-            self.Kp = np.diag(np.array([Kp, Kp])) # pow(omega,2)
-            self.Ki = np.diag(np.array([Ki, Ki]))
-            self.Kd = np.diag(np.array([Kd, Kd])) # 2*zeta*omega
+    def forward_kinematic(self, q):
+        """
+        Calculate the forward kinematic of the manipulator to find end-effector position based on the joint anlge
+
+        :param np.ndarray q: joint angle
+        :returns: 
+            - pos (np.ndarray) - end-effector of position
+        """
+        L1, L2 = self.L[0][0], self.L[1][0] # length of each link
+        q1, q2 = q[0][0], q[1][0] # joint angle
+        x = L1*np.cos(q1) + L2*np.cos(q1+q2)
+        y = L1*np.sin(q1) + L2*np.sin(q1+q2)
+        pos = np.array([[x],[y]])
+        return pos
+
+    def jacobian(self, q):
+        """
+        Calculate the jacobian matrix of the manipulator based on the joint anlge
+
+        :param np.ndarray q: joint angle
+        :returns: 
+            - J (np.ndarray) - jacobian matrix
+        """
+        L1, L2 = self.L[0][0], self.L[1][0] # length of each link
+        q1, q2 = q[0][0], q[1][0] # joint angle
+        j11 = -L1*np.sin(q1)-L2*np.sin(q1+q2)
+        j12 = -L2*np.sin(q1+q2)
+        j21 = L1*np.cos(q1)+L2*np.cos(q1+q2)
+        j22 = L2*np.cos(q1+q2)
+        J = np.array([[j11, j12],[j21, j22]])
+        return J
+
+    def main(self, omega, zeta, torque_limit):
+        self.Kp = np.diag(np.array([pow(omega,2), pow(omega,2)])) # pow(omega,2)
+        self.Ki = np.diag(np.array([0, 0]))
+        self.Kd = np.diag(np.array([2*zeta*omega, 2*zeta*omega])) # 2*zeta*omega
         error = np.array([[0], [0]])
+        pos_x_list = []
+        pos_y_list = []
         q1_list = []
         q2_list = []
         tau1_list = []
         tau2_list = []
         iternation_list = []
-        for i in range (int(self.T/self.dt)):
-            # print()
-            # Get dynamic by current joint angle and joint velocity
-            D, C, Fc, Fv, G = self.get_dynamics(self.q, self.q_dot)
+        self.xd = self.forward_kinematic(self.qd)
+        with Bar('Processing... ', max=int(self.T/self.dt)) as bar:
+            for i in range (int(self.T/self.dt)):
+                # Get dynamic by current joint angle and joint velocity
+                D, C, Fc, Fv, G = self.get_dynamics(self.q, self.q_dot)
 
-            # Acculmated error
-            error = error + ((self.qd-self.q)*self.dt)
+                # Acculmated error
+                error = error + ((self.qd-self.q)*self.dt)
 
-            if inverse_dynamic == True:
-                # Inverse dynamic (Computed torque) aims to find non-linear feedback control law u to become zeros
-                u = self.qd_dot_dot + self.Kp @ (self.qd-self.q) + self.Kd @ (self.qd_dot-self.q_dot) + self.Ki @ error
+                # Inverse dynamic (Computed torque) method aims to find non-linear feedback control law u to become zeros
+                # u is the control input force
+                u = self.Kp @ (self.qd-self.q) + self.Kd @ (self.qd_dot-self.q_dot) + self.Ki @ error
 
                 # Calculate the torque
-                if friction == True:
-                    tau = D @ u + C @ self.q_dot + Fc @ np.sign(self.q_dot) + Fv @ self.q_dot + G
-                else:
-                    tau = D @ u + C @ self.q_dot + G
-            else:
-                # PID controller on torque
-                tau = self.Kp @ (self.qd-self.q) + self.Kd @ (self.qd_dot-self.q_dot) + self.Ki @ error
+                tau = D @ u + C @ self.q_dot + Fc @ np.sign(self.q_dot) + Fv @ self.q_dot + G
 
-            # Torque bound
-            if torque_bound == True:
+                # Torque bound
                 tau[tau >= torque_limit] = torque_limit
                 tau[tau <= -torque_limit] = -torque_limit
 
-            # Calculate the joint acceleration by solving dynamic equation
-            # Friction included or not
-            if friction == True:
+                # Calculate the joint acceleration by solving dynamic equation
                 self.q_dot_dot = np.linalg.inv(D) @ (tau - C @ self.q_dot - Fc @ np.sign(self.q_dot) - Fv @ self.q_dot - G)
-            else:
-                self.q_dot_dot = np.linalg.inv(D) @ (tau - C @ self.q_dot - G)
 
-            # Update the joint angle and velocity
-            self.q = self.q + self.q_dot * self.dt
-            self.q_dot = self.q_dot + self.q_dot_dot * self.dt
+                # Update the joint angle and velocity
+                self.q_dot = self.q_dot + self.q_dot_dot * self.dt
+                self.q = self.q + self.q_dot * self.dt
 
-            q1 = self.q[0][0]
-            q2 = self.q[1][0]
-            tau1 = tau[0][0]
-            tau2 = tau[1][0]
-            q1_list.append(q1)
-            q2_list.append(q2)
-            tau1_list.append(tau1)
-            tau2_list.append(tau2)
-            iternation_list.append(i)
+                self.x = self.forward_kinematic(self.q)
+                x = self.x[0][0]
+                y = self.x[1][0]
+                q1 = self.q[0][0]
+                q2 = self.q[1][0]
+                tau1 = tau[0][0]
+                tau2 = tau[1][0]
+                q1_list.append(q1)
+                q2_list.append(q2)
+                tau1_list.append(tau1)
+                tau2_list.append(tau2)
+                iternation_list.append(i)
+                pos_x_list.append(x)
+                pos_y_list.append(y)
+
+                # Plot the movement
+                self.plot_robot()
+                bar.next()
 
         print("Target joint angle: ", self.qd[0][0], self.qd[1][0])
         print("Final joint angle: ", self.q[0][0], self.q[1][0])
-        self.plot_robot(q1_list, q2_list, tau1_list, tau2_list, iternation_list)
+        print("Target position: ", self.xd[0][0], self.xd[1][0])
+        print("Final position: ", self.x[0][0], self.x[1][0])
+        self.plot_graph(q1_list, q2_list, tau1_list, tau2_list, iternation_list, pos_x_list, pos_y_list)
 
-    def plot_robot(self, q1_list, q2_list, tau1_list, tau2_list, iternation_list):
-        plt.figure()
+    def plot_robot(self):
+        # Plot robotic arm movement
+        x0, y0 = 0, 0
+        x1 = self.L[0][0] * np.cos(self.q[0][0])
+        y1 = self.L[0][0] * np.sin(self.q[0][0])
+        x2 = x1 + self.L[1][0] * np.cos(self.q[0][0] + self.q[1][0])
+        y2 = y1 + self.L[1][0] * np.sin(self.q[0][0] + self.q[1][0])
+
+        plt.plot([x0, x1], [y0, y1], 'b-', label='Link 1')
+        plt.plot([x1, x2], [y1, y2], 'g-', label='Link 2')
+        plt.plot([x0, x1, x2], [y0, y1, y2], 'ro', label='Joint')
+        
+        plt.xlim(-self.max_length, self.max_length)
+        plt.ylim(-self.max_length, self.max_length)
+        plt.plot(self.xd[0][0], self.xd[1][0], 'yo', label='Desired Position')
+        
+        plt.legend()
+        plt.draw()
+        plt.pause(0.01)
+        plt.clf()
+
+    def plot_graph(self, q1_list, q2_list, tau1_list, tau2_list, iternation_list, pos_x_list, pos_y_list):
         # plot trajectory
-        plt.subplot(2, 1, 1)
+        plt.subplot(3, 1, 1)
         plt.plot(iternation_list, q1_list, label='q1') # joint angle 1
         plt.plot(iternation_list, q2_list, label='q2') # joint angle 2
         plt.axhline(y=qd[0], color='r', linestyle='--', label='qd1') # joint velocity 1
@@ -205,17 +260,25 @@ class manipulator_control:
         plt.legend()
 
         # plot torque
-        plt.subplot(2, 1, 2)
+        plt.subplot(3, 1, 2)
         plt.plot(iternation_list, tau1_list, label='tau1') # joint torque 1
         plt.plot(iternation_list, tau2_list, label='tau2') # joint torque 2
         plt.xlabel('Time [{}s]'.format(self.dt))
         plt.ylabel('Joint Torques [Nm]')
         plt.legend()
 
+        # plot position
+        plt.subplot(3, 1, 3)
+        plt.plot(iternation_list, pos_x_list, label='current x') # current position x
+        plt.plot(iternation_list, pos_y_list, label='current y') # current position y
+        plt.axhline(y=self.xd[0], color='r', linestyle='--', label='desired x') # desired position x
+        plt.axhline(y=self.xd[1], color='g', linestyle='--', label='desired y') # desired position y
+        plt.xlabel('Time [{}s]'.format(self.dt))
+        plt.ylabel('Position [m]')
+        plt.legend()
+
         plt.tight_layout()
         plt.show()
-
-
 
 L = np.array([[1.0], [0.5]], dtype=float) # length of each link
 ML = np.array([[0.1], [0.05]], dtype=float) # mass of each link
@@ -226,16 +289,12 @@ qd = np.array([[-2*np.pi/3], [2*np.pi/3]], dtype=float) # desired joint anlge
 q_dot = np.array([[0], [0]], dtype=float) # initial joint velocity
 qd_dot = np.array([[0], [0]], dtype=float) # desired joint velocity
 q_dot_dot = np.array([[0], [0]], dtype=float) # initial joint acceleration
-qd_dot_dot = np.array([[0], [0]], dtype=float) # desired joint acceleration
-sim = manipulator_control(L, ML, IL, D, qd, qd_dot, qd_dot_dot, q, q_dot, q_dot_dot)
-Kp = 6.0
-Ki = 0.0
-Kd = 2.0
-friction = True
-inverse_dynamic = True
-torque_bound = True
-torque_limit = 0.1 # 0.5 or 0.1
-sim.main(Kp, Ki, Kd, friction, inverse_dynamic, torque_bound, torque_limit)
-
-# Q1 PID controller, friction = False, inverse_dynamic = False, torque_bound = False
-# Q2 Inverse dynamic controller, friction = True, inverse_dynamic = True, torque_bound = True
+x = np.array([[0], [0]], dtype=float) # initial end-effector position
+x_dot = np.array([[0], [0]], dtype=float) # initial end-effector velocity
+xd = np.array([[0], [0]], dtype=float) # desired end-effector position
+xd_dot = np.array([[0], [0]], dtype=float) # desired end-effector velocity
+sim = manipulator_control(L, ML, IL, D, qd, qd_dot, q, q_dot, q_dot_dot, x, x_dot, xd, xd_dot)
+omega = 5 # natural frequency
+zeta = 0.5 # damping ratio
+torque_limit = 0.5 # 0.5 for Q2a or 0.1 for Q2b
+sim.main(omega, zeta, torque_limit)
