@@ -165,6 +165,14 @@ class manipulator_control:
         return J
 
     def main(self, Kp, Ki, Kd, elastic):
+        """
+        Implement impedance controller in here and regulate the end-effector position to desired position
+
+        :param float Kp: proportional end-effector position error gain
+        :param float Ki: integral end-effector position error gain
+        :param float Kd: derivative end-effector velocity error gain
+        :param bool elastic: elastic wall exist or not
+        """
         self.Kp = np.diag(np.array([Kp, Kp])) # pow(omega,2)
         self.Ki = np.diag(np.array([Ki, Ki]))
         self.Kd = np.diag(np.array([Kd, Kd])) # 2*zeta*omega
@@ -235,7 +243,7 @@ class manipulator_control:
                 pos_y_list.append(y)
 
                 # Plot the movement
-                # self.plot_robot()
+                self.plot_robot()
                 bar.next()
 
         print("Target position: ", self.xd[0][0], self.xd[1][0])

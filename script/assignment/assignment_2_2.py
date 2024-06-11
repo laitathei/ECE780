@@ -164,6 +164,13 @@ class manipulator_control:
         return J
 
     def main(self, omega, zeta, torque_limit):
+        """
+        Implement joint space controller of type inverse dynamics in here and regulate the joint angle to desired angle
+
+        :param float omega: natural frequency
+        :param float zeta: damping ratio
+        :param float torque_limit: maximum magnitude of torque
+        """
         self.Kp = np.diag(np.array([pow(omega,2), pow(omega,2)])) # pow(omega,2)
         self.Ki = np.diag(np.array([0, 0]))
         self.Kd = np.diag(np.array([2*zeta*omega, 2*zeta*omega])) # 2*zeta*omega

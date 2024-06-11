@@ -150,6 +150,13 @@ class manipulator_control:
         return J
 
     def main(self, Kp, Ki, Kd):
+        """
+        Implement joint space controller of type PD with gravity compensation in here and regulate the joint angle to desired angle
+
+        :param float Kp: proportional joint angle error gain
+        :param float Ki: integral joint angle error gain
+        :param float Kd: derivative joint velocity error gain
+        """
         self.Kp = np.diag(np.array([Kp, Kp])) # pow(omega,2)
         self.Ki = np.diag(np.array([Ki, Ki]))
         self.Kd = np.diag(np.array([Kd, Kd])) # 2*zeta*omega
