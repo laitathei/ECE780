@@ -23,6 +23,7 @@ class manipulator_control:
         self.dt = 0.01 # delta time
         self.T = 3.0 # simulation time
         self.max_length = self.L[0][0] + self.L[1][0] # maximum length
+        self.text = "assignment_2_Q1"
 
     def get_dynamics(self, q, q_dot):
         """
@@ -178,7 +179,7 @@ class manipulator_control:
                 error = error + ((self.qd-self.q)*self.dt)
 
                 # PID controller on control input torque
-                tau = self.Kp @ (self.qd-self.q) + self.Kd @ (self.qd_dot-self.q_dot) + self.Ki @ error
+                tau = self.Kp @ (self.qd-self.q) + self.Kd @ (self.qd_dot-self.q_dot) + self.Ki @ error + G
 
                 # Calculate the joint acceleration by solving dynamic equation
                 self.q_dot_dot = np.linalg.inv(D) @ (tau - C @ self.q_dot - G)
@@ -210,7 +211,9 @@ class manipulator_control:
         print("Final joint angle: ", self.q[0][0], self.q[1][0])
         print("Target position: ", self.xd[0][0], self.xd[1][0])
         print("Final position: ", self.x[0][0], self.x[1][0])
-        self.plot_graph(q1_list, q2_list, tau1_list, tau2_list, iternation_list, pos_x_list, pos_y_list)
+        self.plot_angle(q1_list, q2_list, iternation_list)
+        self.plot_tau(tau1_list, tau2_list, iternation_list)
+        self.plot_position(pos_x_list, pos_y_list, iternation_list)
 
     def plot_robot(self):
         # Plot robotic arm movement
@@ -229,48 +232,57 @@ class manipulator_control:
         plt.plot(self.xd[0][0], self.xd[1][0], 'yo', label='Desired Position')
         
         plt.legend()
-        plt.savefig('script\\assignment\\assignment_2_picture\\assignment_2_Q1_robotic_arm.png')
+        plt.savefig('script\\assignment\\assignment_2_picture\\{}_robotic_arm.png'.format(self.text))
         plt.draw()
         plt.pause(0.01)
         plt.clf()
 
-    def plot_graph(self, q1_list, q2_list, tau1_list, tau2_list, iternation_list, pos_x_list, pos_y_list):
+    def plot_angle(self, q1_list, q2_list, iternation_list):
+        fig, axs = plt.subplots(1, 1, figsize=(12, 6))
         # plot trajectory
-        fig, axs = plt.subplots(3, 1, figsize=(12, 6))
-        axs[0].plot(iternation_list, q1_list, label='q1') # joint angle 1
-        axs[0].plot(iternation_list, q2_list, label='q2') # joint angle 2
-        axs[0].axhline(y=qd[0], color='r', linestyle='--', label='qd1') # joint velocity 1
-        axs[0].axhline(y=qd[1], color='g', linestyle='--', label='qd2') # joint velocity 2
-        axs[0].set_xlabel('Time [{}s]'.format(self.dt))
-        axs[0].set_ylabel('Joint Angles [rad]')
-        axs[0].legend()
-        
-        # plot torque
-        axs[1].plot(iternation_list, tau1_list, label='tau1') # joint torque 1
-        axs[1].plot(iternation_list, tau2_list, label='tau2') # joint torque 2
-        axs[1].set_xlabel('Time [{}s]'.format(self.dt))
-        axs[1].set_ylabel('Joint Torques [Nm]')
-        axs[1].legend()
+        axs.plot(iternation_list, q1_list, label='q1') # joint angle 1
+        axs.plot(iternation_list, q2_list, label='q2') # joint angle 2
+        axs.axhline(y=qd[0], color='r', linestyle='--', label='qd1') # joint velocity 1
+        axs.axhline(y=qd[1], color='g', linestyle='--', label='qd2') # joint velocity 2
+        axs.set_xlabel('Time [{}s]'.format(self.dt))
+        axs.set_ylabel('Joint Angles [rad]')
+        axs.legend()
+        plt.tight_layout()
+        plt.savefig('script\\assignment\\assignment_2_picture\\{}_joint_angle.png'.format(self.text))
+        plt.show()
 
+    def plot_tau(self, tau1_list, tau2_list, iternation_list):
+        # plot torque
+        fig, axs = plt.subplots(1, 1, figsize=(12, 6))
+        axs.plot(iternation_list, tau1_list, label='tau1') # joint torque 1
+        axs.plot(iternation_list, tau2_list, label='tau2') # joint torque 2
+        axs.set_xlabel('Time [{}s]'.format(self.dt))
+        axs.set_ylabel('Joint Torques [Nm]')
+        axs.legend()
+        plt.tight_layout()
+        plt.savefig('script\\assignment\\assignment_2_picture\\{}_joint_torque.png'.format(self.text))
+        plt.show()
+
+    def plot_position(self, pos_x_list, pos_y_list, iternation_list):
         # plot position
-        axs[2].plot(iternation_list, pos_x_list, label='current x') # current position x
-        axs[2].plot(iternation_list, pos_y_list, label='current y') # current position y
-        axs[2].axhline(y=self.xd[0], color='r', linestyle='--', label='desired x') # desired position x
-        axs[2].axhline(y=self.xd[1], color='g', linestyle='--', label='desired y') # desired position y
-        axs[2].set_xlabel('Time [{}s]'.format(self.dt))
-        axs[2].set_ylabel('Position [m]')
-        axs[2].legend()
+        fig, axs = plt.subplots(1, 1, figsize=(12, 6))
+        axs.plot(iternation_list, pos_x_list, label='current x') # current position x
+        axs.plot(iternation_list, pos_y_list, label='current y') # current position y
+        axs.axhline(y=self.xd[0], color='r', linestyle='--', label='desired x') # desired position x
+        axs.axhline(y=self.xd[1], color='g', linestyle='--', label='desired y') # desired position y
+        axs.set_xlabel('Time [{}s]'.format(self.dt))
+        axs.set_ylabel('Position [m]')
+        axs.legend()
 
         plt.tight_layout()
-        plt.savefig('script\\assignment\\assignment_2_picture\\assignment_2_Q1_joint_angle_torque_position.png')
+        plt.savefig('script\\assignment\\assignment_2_picture\\{}_joint_position.png'.format(self.text))
         plt.show()
         
-
 L = np.array([[1.0], [0.5]], dtype=float) # length of each link
 ML = np.array([[0.1], [0.05]], dtype=float) # mass of each link
 D = np.array([[0.5], [0.25]], dtype=float) # distance between link center of mass and its origin
 IL = np.array([[0.1], [0.05]], dtype=float) # inertia of each link
-q = np.array([[0], [0]], dtype=float) # initial joint anlge
+q = np.array([[0.5], [1]], dtype=float) # initial joint anlge
 qd = np.array([[-2*np.pi/3], [2*np.pi/3]], dtype=float) # desired joint anlge
 q_dot = np.array([[0], [0]], dtype=float) # initial joint velocity
 qd_dot = np.array([[0], [0]], dtype=float) # desired joint velocity
