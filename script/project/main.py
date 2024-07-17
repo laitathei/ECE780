@@ -2,13 +2,23 @@ from mobile_manipulator_unicycle import MobileManipulatorUnicycle
 import time
 from utils import action
 
-user_action = action()
-user_action.manual_control()
-# user_action.set_arm_pose(100,0)
-# user_action.set_arm_pose(0,0)
-# user_action.set_arm_pose(0,100)
-# user_action.set_arm_pose(0,0)
-# user_action.get_pose()
+robot = action()
+
+robot.open_gripper()
+robot.arm_forward()
+robot.close_gripper()
+robot.arm_backword()
+
+time.sleep(1)
+
+robot.arm_forward()
+robot.open_gripper()
+robot.arm_backword()
+robot.close_gripper()
+
+robot.set_arm_pose(0,0)
+
+
 
 # while not task_done:
 

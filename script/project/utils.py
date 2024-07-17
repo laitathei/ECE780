@@ -4,7 +4,7 @@ import time
 
 class action:
     def __init__(self) -> None:
-        # self.robot = MobileManipulatorUnicycle(robot_id=2, backend_server_ip="192.168.0.2")
+        self.robot = MobileManipulatorUnicycle(robot_id=2, backend_server_ip="192.168.0.2")
         time.sleep(1)
         self.v = 0.5
         self.omega = 10.0
@@ -14,6 +14,26 @@ class action:
         self.arm_position_step = 10.0
         self.power_step = 1.0
         print("Initialize action finish")
+
+    def set_mobile_base_speed_and_gripper_power(self,  v, omega, gripper_power, lapse = 3.):
+        start_time = time.time()
+        while time.time() - start_time < lapse:
+            self.robot.set_mobile_base_speed_and_gripper_power(v=v, omega=omega, gripper_power=gripper_power)
+            time.sleep(0.05)
+        print("set_mobile_base_speed_and_gripper_power finish")
+
+    def set_arm_pose(self, x, y,lapse = 3.):
+        """
+        Request robot arm move to desired position
+
+        :param float x: desired position in x-axis
+        :param float y: desired position in y-axis
+        """
+        start_time = time.time()
+        while time.time() - start_time < lapse:
+            self.robot.set_arm_pose(x, y)
+            time.sleep(0.05)
+        print("set_arm_pose finish")
 
     def move_forward(self, v, time):
         """
@@ -67,41 +87,35 @@ class action:
             time.sleep(0.05)
         print("Rotate anticlockwise action finish")
         
-    def set_arm_pose(self, x, y):
-        """
-        Request robot arm move to desired position
 
-        :param float x: desired position in x-axis
-        :param float y: desired position in y-axis
-        """
-        self.robot.set_arm_pose(x, y)
-        print("Set arm pose action finish")
 
-    def open_gripper(self, power, time):
+    def open_gripper(self):
         """
         Request robot arm open the gripper with specific time
 
         :param float power: desired power for robot arm to open the gripper
         :param float time: time for robot open the gripper
         """
-        start_time = time.time()
-        while time.time() - start_time < time:
-            self.robot.set_mobile_base_speed_and_gripper_power(v=0, omega=0, gripper_power=power)
-            time.sleep(0.05)
+        self.set_mobile_base_speed_and_gripper_power(v =0, omega=0, gripper_power=1.0,lapse=3. )
         print("Open gripper action finish")
 
-    def close_gripper(self, power, time):
+    def close_gripper(self):
         """
         Request robot arm close the gripper with specific time
 
         :param float power: desired power for robot arm to close the gripper
         :param float time: time for robot close the gripper
         """
-        start_time = time.time()
-        while time.time() - start_time < time:
-            self.robot.set_mobile_base_speed_and_gripper_power(v=0, omega=0, gripper_power=-power)
-            time.sleep(0.05)
+        self.set_mobile_base_speed_and_gripper_power(v=0, omega=0,gripper_power=-1.0, lapse=3.) 
         print("Close gripper action finish")
+
+    def arm_forward(self):
+        self.set_arm_pose(180, -60, lapse=6.)
+        print("arm_forward finish")
+
+    def arm_backword(self):
+        self.set_arm_pose(60,40, lapse=6.)
+        print("arm_backword finish")
 
     def stop_all(self):
         """
