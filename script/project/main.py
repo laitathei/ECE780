@@ -43,8 +43,8 @@ while not task_done:
         Px_d, Py_d, theta_d = dropoff
     Px_o, Py_o, theta_o = obstacles[:, 0], obstacles[:, 1], obstacles[:, 2]
 
-    s = np.array([[Px], [Py], [theta]])  # state vector [Px, Py, theta]
-    sd = np.array([[Px_d], [Py_d], [theta_d]])  # target state [Px_d, Py_d, theta_d]
+    s = np.array([[Px], [Py], [theta]]) # state vector [Px, Py, theta]
+    sd = np.array([[Px_d], [Py_d], [theta_d]]) # target state [Px_d, Py_d, theta_d]
     so = np.array([Px_o, Py_o, theta_o]) # obstalce state [Px_o, Py_o, theta_o]
 
     u = qp_solver(s, sd, so, alpha, beta, d, k_f, k_h, k_delta)

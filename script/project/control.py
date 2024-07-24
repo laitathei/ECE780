@@ -75,7 +75,6 @@ def qp_solver(s, sd, so, alpha, beta, d, k_f, k_h, k_delta):
         lo = ls(xo_diff, yo_diff)
 
         G[1+i][:2] = 2 * xyo_diff.T @ g[:2] + 2 * k_h * Po_theta_diff * lo.T @ g
-        G[1+i][2+i] = 1
         G[0][2+i] = -1
         h[1+i][0] = beta * (xo_diff**2 + yo_diff**2 - d**2 - k_h * (Po_theta_diff)**2)
 

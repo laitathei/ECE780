@@ -8,7 +8,7 @@ import numpy as np
 class MobileManipulatorUnicycleSim:
     def __init__(self, robot_id, backend_server_ip=None, robot_pose=[], pickup_location=[], dropoff_location=[], obstacles_location=[]):
         # constants
-        self.MAX_LINEAR_SPEED = 0.1 # meters / second
+        self.MAX_LINEAR_SPEED = 1 # meters / second
         self.MAX_ANGULAR_SPEED = 30 # degrees / second
         self.TIMEOUT_SET_MOBILE_BASE_SPEED = 0 # milliseconds
         self.TIMEOUT_GET_POSES = 0 # milliseconds
