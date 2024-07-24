@@ -1,7 +1,6 @@
 from mobile_manipulator_unicycle_sim import MobileManipulatorUnicycleSim
 import time
 import math
-import cvxpy as cp
 import numpy as np
 import matplotlib.pyplot as plt
 from qpsolvers import solve_qp
@@ -36,7 +35,6 @@ while time.time() - start_time < T:
     print("")
     print("Current position: ", poses[0])
     print("Pickup position: ", poses[1])
-    print("Heading: ", np.degrees(poses[0][2]))
     # print("Dropoff position: ", poses[2])
     # print("Obstacles position: ", poses[3])
 
@@ -52,7 +50,11 @@ while time.time() - start_time < T:
 
     x_diff = Px - Px_d
     y_diff = Py - Py_d
-    theta_diff = angle_diff(np.arctan2(y_diff, x_diff), theta)
+    theta_diff = -angle_diff(theta, np.arctan2(y_diff, x_diff))
+
+    print("Heading (degree): ", np.degrees(current_pos[2]))
+    print("Angle difference (degree): ", np.degrees(theta_diff))
+    print("Desired Heading (degree): ", np.degrees(np.arctan2(y_diff, x_diff)))
     ds = np.array([[x_diff],
                    [y_diff],
                    [theta_diff]])
@@ -62,5 +64,6 @@ while time.time() - start_time < T:
     v = u_star[0][0]
     omega = u_star[1][0]
     print(u_star)
+    # exit()
     robot.set_mobile_base_speed_and_gripper_power(v=v, omega=omega, gripper_power=0.0)
     time.sleep(0.1)

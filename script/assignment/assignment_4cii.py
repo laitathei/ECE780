@@ -10,7 +10,7 @@ alpha = 0.1 # gain
 
 # Simulation parameter
 dt = 0.1
-T = 1000
+T = 200
 arrow_length = 0.1
 num_steps = int(T / dt)
 
@@ -38,23 +38,6 @@ def S(x,y,theta,delta):
 def g(theta,delta):
     return np.array([[np.cos(delta+theta)-L/l*np.sin(delta)*np.sin(delta+theta), -L*np.sin(delta+theta)],
                    [np.sin(delta+theta)+L/l*np.sin(delta)*np.cos(delta+theta), L*np.cos(delta+theta)]])
-
-# def ds(v,omega,theta,delta):
-#     gs = g(theta, delta)
-#     u = np.array([[v],
-#                   [omega]])
-#     dot_s = gs @ u
-#     return dot_s
-
-# def Vs(s, sd):
-#     return np.linalg.norm(s - sd)
-
-# def dVs(v,omega,theta,delta,xp,yp):
-#     dot_s = ds(v,omega,theta,delta)
-#     dv = np.array([[2*xp],
-#                    [2*yp]])
-#     dot_vs = dv.T @ dot_s
-#     return dot_vs
 
 # Initialize lists to store the trajectory
 x_trajectory = []
@@ -131,5 +114,5 @@ plt.legend()
 plt.grid(True)
 
 plt.tight_layout()
-plt.savefig('script\\assignment\\assignment_4_picture\\state_trajectory.png')
+plt.savefig('script\\assignment\\assignment_4_picture\\vehicle_state_trajectory.png')
 plt.show()
