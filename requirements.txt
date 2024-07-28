@@ -5,3 +5,5 @@ pip3 install paho-mqtt
 pip3 install numpy qpsolvers
 pip3 install pynput
 pip3 install progress progressbar2 alive-progress tqdm
+pip3 install cvxpy
+pip3 install qpsolvers qpsolvers[cvxopt]

@@ -8,7 +8,7 @@ import numpy as np
 class MobileManipulatorUnicycleSim:
     def __init__(self, robot_id, backend_server_ip=None, robot_pose=[], pickup_location=[], dropoff_location=[], obstacles_location=[]):
         # constants
-        self.MAX_LINEAR_SPEED = 0.1 # meters / second
+        self.MAX_LINEAR_SPEED = 1 # meters / second
         self.MAX_ANGULAR_SPEED = 30 # degrees / second
         self.TIMEOUT_SET_MOBILE_BASE_SPEED = 0 # milliseconds
         self.TIMEOUT_GET_POSES = 0 # milliseconds
@@ -21,19 +21,19 @@ class MobileManipulatorUnicycleSim:
         if robot_pose:
             self.robot_pose = robot_pose
         else:
-            self.robot_pose = [-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), 2 * math.pi * random.random()]
+            self.robot_pose = [-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), random.uniform(-np.pi/2, np.pi/2)]
         if pickup_location:
             self.pickup_location = pickup_location
         else:
-            self.pickup_location = [-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random()]
+            self.pickup_location = [-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), random.uniform(-np.pi/2, np.pi/2)]
         if dropoff_location:
             self.dropoff_location = dropoff_location
         else:
-            self.dropoff_location = [-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random()]
+            self.dropoff_location = [-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), random.uniform(-np.pi/2, np.pi/2)]
         if obstacles_location:
             self.obstacles_location = obstacles_location
         else:
-            self.obstacles_location = [[-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random()], [-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random()]]
+            self.obstacles_location = [[-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), random.uniform(-np.pi/2, np.pi/2)], [-self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), -self.ENV_SIZE / 2.0 + self.ENV_SIZE * random.random(), random.uniform(-np.pi/2, np.pi/2)]]
 
         # initialize counters
         self.last_time_set_mobile_base_speed = int(round(time.time()*1000))
