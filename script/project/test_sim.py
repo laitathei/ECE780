@@ -74,13 +74,13 @@ def clf_control(x, y, theta, x_d, y_d, k=1.0, k_theta=0.5):
 
     return v, w
 
-KAPPA = 2.5
+KAPPA = 4
 KAPPA_H = 0.5
-KAPPA_DELTA = 0.5
+KAPPA_DELTA = 1.0
 ALPHA = 1.0
-BETA = 1.0
-def clf_cbf_control( robot_pose, destination_location, obstacles_location, d_safe=0.5):
-    
+BETA = 2.0
+def clf_cbf_control( robot_pose, destination_location, obstacles_location, d_safe=0.2):
+    n = len(obstacles_location)
     g = get_g(robot_pose[2])
     q = robot_pose
     q_des = np.array(destination_location)
@@ -102,15 +102,16 @@ def clf_cbf_control( robot_pose, destination_location, obstacles_location, d_saf
     Q[:2,:2] = np.eye(2)
     Q[2,2] = KAPPA_DELTA
 
-    G = np.zeros((4, 3))
+    G = np.zeros((n+1, 3))
     G[0,:2] = -2 * q_diff.T @ g[:-1,:] + 2 * KAPPA * heading_diff * np.array([y_diff * one_over_x_squared_plus_y_squared, -x_diff * one_over_x_squared_plus_y_squared, -1]) @ g
-    G[1:,:2] = 2 * q_u_diff.T @ g[:-1,:] + 2 * KAPPA_H * heading_u_diff * np.array([y_u_diff * one_over_x_squared_plus_y_squared_u, -x_u_diff * one_over_x_squared_plus_y_squared_u, [-1]*3]) @ g
+    for i in range (n):
+        G[i+1,:2] = 2 * q_u_diff.T[i] @ g[:-1,:] + 2 * KAPPA_H * heading_u_diff[i] * np.array([y_u_diff[i] * one_over_x_squared_plus_y_squared_u[i], -x_u_diff[i] * one_over_x_squared_plus_y_squared_u[i], -1]) @ g
     G[0, 2] = 1.0
     G[1:,2] = 0.0
 
-    h = np.zeros(4)
+    h = np.zeros(n+1)
     h[0] = -ALPHA * (np.linalg.norm(q_diff)**2 + KAPPA * heading_diff**2)
-    h[1:4] = BETA * (np.linalg.norm(q_u_diff)**2 - d_safe**2 - KAPPA_H * heading_u_diff**2)
+    h[1:] = BETA * (np.linalg.norm(q_u_diff)**2 - d_safe**2 - KAPPA_H * heading_u_diff**2)
 
     try:
         u_delta = solve_qp(Q,
@@ -171,7 +172,7 @@ if __name__ == "__main__":
         robot_pose=[2.0,1.0, np.random.uniform(-np.pi, np.pi)], 
         dropoff_location=[2.0,1.0],
         pickup_location=[-4.0, -2.0],
-        obstacles_location=[[-1.0, -0.25], [-0.5, -0.5], [0.5, -0.5]]
+        obstacles_location=[[-1.0, -0.25], [-0.5, -0.5]]
     )
  
     while True:
