@@ -1,7 +1,6 @@
 import numpy as np
 from qpsolvers import solve_qp
 
-
 def angle_diff(theta_d, theta):
     # Elimiate the effect of dtheta over +/- 180
     dtheta = theta_d - theta
@@ -25,6 +24,9 @@ def ls(x_diff, y_diff):
     return l
 
 def qp_solver(s, sd, so, alpha, beta, d, k_f, k_h, k_delta):
+    """
+    CLF and CBF combinated quadratic program
+    """
     # heading theta
     theta = s[2][0]
 
@@ -58,7 +60,7 @@ def qp_solver(s, sd, so, alpha, beta, d, k_f, k_h, k_delta):
     # navigation constraints
     P[:2,:2] = np.eye(2)
     G[0][:2] = -2 * xy_diff.T @ g[:2] + 2 * k_f * Pd_theta_diff * ld.T @ g
-    h[0][0] = -alpha * (x_diff**2 + y_diff**2 + k_f * (Pd_theta_diff)**2)
+    h[0][0] = -alpha * (x_diff**2 + y_diff**2 + k_f * Pd_theta_diff**2)
 
     # obstacle avoid constraints
     for i in range (num_obstacles):
@@ -71,15 +73,19 @@ def qp_solver(s, sd, so, alpha, beta, d, k_f, k_h, k_delta):
                              [yo_diff]])
         
         Po_theta = np.arctan2(yo_diff, xo_diff)
-        Po_theta_diff = angle_diff(Po_theta+np.pi, theta)
+        # Po_theta_diff = angle_diff(angle_diff(Po_theta, theta), -np.pi)
+        Po_theta_diff = angle_diff(Po_theta-np.pi, theta)
         lo = ls(xo_diff, yo_diff)
 
         G[1+i][:2] = 2 * xyo_diff.T @ g[:2] + 2 * k_h * Po_theta_diff * lo.T @ g
         G[0][2+i] = -1
-        h[1+i][0] = beta * (xo_diff**2 + yo_diff**2 - d**2 - k_h * (Po_theta_diff)**2)
-
+        h[1+i][0] = beta * (xo_diff**2 + yo_diff**2 - d**2 - k_h * Po_theta_diff**2)
+    # print("")
+    # print(P)
+    # print(G)
+    # print(h)
     x = solve_qp(P, q, G, h, solver="cvxopt")
-
+    # print(x)
     return x
 
 def pickup_object(robot):

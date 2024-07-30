@@ -19,7 +19,7 @@ class action:
         start_time = time.time()
         while time.time() - start_time < lapse:
             self.robot.set_mobile_base_speed_and_gripper_power(v=v, omega=omega, gripper_power=gripper_power)
-            time.sleep(0.05)
+            time.sleep(0.01)
         print("set_mobile_base_speed_and_gripper_power finish")
 
     def set_arm_pose(self, x, y,lapse = 3.):
@@ -143,9 +143,10 @@ class action:
         print("Robot position (m): ", poses[0])
         print("Pickup position (m): ", poses[1])
         print("Dropoff position (m): ", poses[2])
-        print("Obstacles 1 position (m): ", poses[3])
-        print("Obstacles 2 position (m): ", poses[4])
-        print("Obstacles 3 position (m): ", poses[5])
+        # print("Obstacles 1 position (m): ", poses[3])
+        # print("Obstacles 2 position (m): ", poses[4])
+        # print("Obstacles 3 position (m): ", poses[5])
+        return poses
 
     def on_press(self, key):
         """
