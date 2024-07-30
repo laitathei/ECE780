@@ -38,6 +38,15 @@ import numpy as np
 # poses = robot.get_poses()
 # print(f"Robot, pickup, dropoff, obstacles poses: {poses}")
 
+KAPPA = 2
+KAPPA_H = 0.5
+KAPPA_DELTA = 1.0
+ALPHA = 1.0
+BETA = 2.0
+D = 0.1
+L = 0.5
+
+
 def get_g(theta):
     return np.c_[[np.cos(theta), np.sin(theta), 0], [0, 0, 1]]
 
@@ -74,12 +83,8 @@ def clf_control(x, y, theta, x_d, y_d, k=1.0, k_theta=0.5):
 
     return v, w
 
-KAPPA = 4
-KAPPA_H = 0.5
-KAPPA_DELTA = 1.0
-ALPHA = 1.0
-BETA = 2.0
-def clf_cbf_control( robot_pose, destination_location, obstacles_location, d_safe=0.2):
+
+def clf_cbf_control( robot_pose, destination_location, obstacles_location, d_safe=D):
     n = len(obstacles_location)
     g = get_g(robot_pose[2])
     q = robot_pose
@@ -123,49 +128,11 @@ def clf_cbf_control( robot_pose, destination_location, obstacles_location, d_saf
         return  (0.1, 0.1)
     return u_delta[:2] if u_delta is not None else (0.1, 0.1)
 
-def clf_cbf_control_single_obstacle(robot_pose, destination_location, obstacles_location, d_safe=0.5):
-
-    g = get_g(robot_pose[2])
-    q = np.array(robot_pose)
-    D = d_safe
-    q_undes = np.array(obstacles_location)
-    q_des = np.array(destination_location)
-    q_diff = np.array([q_des[0] - q[0], q_des[1] - q[1]])
-    x_diff = q_diff[0]
-    y_diff = q_diff[1]
-    q_u_diff = np.array([q_undes[0] - q[0], q_undes[1] - q[1]])
-    x_u_diff = q_u_diff[0]
-    y_u_diff = q_u_diff[1]
-    one_over_x_squared_plus_y_squared = 1 / (x_diff ** 2 + y_diff ** 2)
-    one_over_x_squared_plus_y_squared_u = 1 / (x_u_diff ** 2 + y_u_diff ** 2)
-    heading_diff = angle_diff(np.arctan2(y_diff, x_diff), q[2])
-    heading_u_diff = angle_diff(np.arctan2(y_u_diff, x_u_diff)+np.pi, q[2])
-    Q = np.zeros((3, 3))
-    Q[:2,:2] = np.eye(2)
-    Q[2,2] = KAPPA_DELTA
-    G = np.zeros((2, 3))
-    G[0,:2] = -2 * q_diff.T @ g[:-1,:] + 2 * KAPPA * heading_diff * np.array([y_diff * one_over_x_squared_plus_y_squared, -x_diff * one_over_x_squared_plus_y_squared, -1]) @ g
-    G[1,:2] = 2 * q_u_diff.T @ g[:-1,:] + 2 * KAPPA_H * heading_u_diff * np.array([y_u_diff * one_over_x_squared_plus_y_squared_u, -x_u_diff * one_over_x_squared_plus_y_squared_u, -1]) @ g
-    G[0,2] = 1.0
-    G[1,2] = 0.0
-    h = np.zeros((2, 1))
-    h[0] = -2 * (np.linalg.norm(q_diff)**2 + KAPPA * heading_diff**2)
-    h[1] = 50 * (np.linalg.norm(q_u_diff)**2 - D**2 - KAPPA_H * heading_u_diff**2)
-    
-    try:
-        u_delta = solve_qp(Q,
-                    np.zeros((3,1)),
-                    G[:,:],
-                    h[:],
-                    solver="cvxopt")
-    except:
-        return  (0.1, 0.1)
-    return u_delta[:2] if u_delta is not None else (0.1, 0.1)
-
     
 
 
 if __name__ == "__main__":
+
 
     robot = MobileManipulatorUnicycleSim(
         robot_id=1, 
@@ -185,7 +152,7 @@ if __name__ == "__main__":
         v, w = clf_cbf_control(pose, pickup , obstacles)
         robot.set_mobile_base_speed_and_gripper_power(v, w, 0.0)
 
-        if np.linalg.norm(pose[:2] - pickup[:2]) < 0.5:
+        if np.linalg.norm(pose[:2] - pickup[:2]) < L:
             print("Picked up the object")
             break
 
@@ -200,7 +167,7 @@ if __name__ == "__main__":
         v, w = clf_cbf_control(pose, dropoff , obstacles)
         robot.set_mobile_base_speed_and_gripper_power(v, w, 0.0)
         
-        if np.linalg.norm(pose[:2] - dropoff[:2]) < 0.5:
+        if np.linalg.norm(pose[:2] - dropoff[:2]) < L:
             print("Drop off the object")
             break
     
