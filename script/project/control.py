@@ -1,6 +1,26 @@
 import numpy as np
 from qpsolvers import solve_qp
 
+min_d = 1000
+
+def Vs(s, sd, k_f):
+    theta = s[2][0]
+    x_diff = sd[0][0] - s[0][0] 
+    y_diff = sd[1][0] - s[1][0]
+    Pd_theta = np.arctan2(y_diff, x_diff)
+    Pd_theta_diff = angle_diff(Pd_theta, theta)
+    vs = x_diff**2 + y_diff**2 + k_f * Pd_theta_diff**2
+    return vs
+
+def Hs(s, so, k_h, d):
+    theta = s[2][0]
+    xo_diff = so[0][0] - s[0][0]
+    yo_diff = so[1][0] - s[1][0]
+    Po_theta = np.arctan2(yo_diff, xo_diff)
+    Po_theta_diff = angle_diff(angle_diff(Po_theta, theta), np.pi)
+    hs = xo_diff**2 + yo_diff**2 - d**2 - k_h * Po_theta_diff**2
+    return hs
+
 def angle_diff(theta_d, theta):
     # Elimiate the effect of dtheta over +/- 180
     dtheta = theta_d - theta
@@ -71,21 +91,20 @@ def qp_solver(s, sd, so, alpha, beta, d, k_f, k_h, k_delta):
         yo_diff = so[1][i] - s[1][0]
         xyo_diff = np.array([[xo_diff],
                              [yo_diff]])
-        
+        global min_d
+        if min_d > np.linalg.norm(xyo_diff):
+            min_d = np.linalg.norm(xyo_diff)
+
         Po_theta = np.arctan2(yo_diff, xo_diff)
-        # Po_theta_diff = angle_diff(angle_diff(Po_theta, theta), -np.pi)
-        Po_theta_diff = angle_diff(Po_theta-np.pi, theta)
+        Po_theta_diff = angle_diff(angle_diff(Po_theta, theta), np.pi)
+        # Po_theta_diff = angle_diff(Po_theta, theta)
         lo = ls(xo_diff, yo_diff)
 
         G[1+i][:2] = 2 * xyo_diff.T @ g[:2] + 2 * k_h * Po_theta_diff * lo.T @ g
         G[0][2+i] = -1
         h[1+i][0] = beta * (xo_diff**2 + yo_diff**2 - d**2 - k_h * Po_theta_diff**2)
-    # print("")
-    # print(P)
-    # print(G)
-    # print(h)
+
     x = solve_qp(P, q, G, h, solver="cvxopt")
-    # print(x)
     return x
 
 def pickup_object(robot):
@@ -100,3 +119,7 @@ def dropoff_object(robot):
     robot.arm_backword()
     robot.close_gripper()
     robot.set_arm_pose(0,0)
+
+def stop(robot):
+    print("Stop robot")
+    robot.set_mobile_base_speed_and_gripper_power(v=0, omega=0, gripper_power=0.0, lapse=3.0)

@@ -13,7 +13,7 @@ robot = MobileManipulatorUnicycleSim(robot_id=1)
 
 # control parameter
 alpha = 10
-k_f = 0.1
+k_f = 0.5
 T = 60
 start_time = time.time()
 

@@ -15,14 +15,14 @@ class action:
         self.power_step = 1.0
         print("Initialize action finish")
 
-    def set_mobile_base_speed_and_gripper_power(self,  v, omega, gripper_power, lapse = 3.):
+    def set_mobile_base_speed_and_gripper_power(self,  v, omega, gripper_power, lapse = 3.0):
         start_time = time.time()
         while time.time() - start_time < lapse:
             self.robot.set_mobile_base_speed_and_gripper_power(v=v, omega=omega, gripper_power=gripper_power)
-            time.sleep(0.01)
+            time.sleep(0.05)
         print("set_mobile_base_speed_and_gripper_power finish")
 
-    def set_arm_pose(self, x, y,lapse = 3.):
+    def set_arm_pose(self, x, y,lapse = 3.0):
         """
         Request robot arm move to desired position
 
@@ -87,8 +87,6 @@ class action:
             time.sleep(0.05)
         print("Rotate anticlockwise action finish")
         
-
-
     def open_gripper(self):
         """
         Request robot arm open the gripper with specific time
@@ -96,7 +94,7 @@ class action:
         :param float power: desired power for robot arm to open the gripper
         :param float time: time for robot open the gripper
         """
-        self.set_mobile_base_speed_and_gripper_power(v =0, omega=0, gripper_power=1.0,lapse=3. )
+        self.set_mobile_base_speed_and_gripper_power(v=0.0, omega=0.0, gripper_power=1.0,lapse=3.0 )
         print("Open gripper action finish")
 
     def close_gripper(self):
@@ -106,7 +104,7 @@ class action:
         :param float power: desired power for robot arm to close the gripper
         :param float time: time for robot close the gripper
         """
-        self.set_mobile_base_speed_and_gripper_power(v=0, omega=0,gripper_power=-1.0, lapse=3.) 
+        self.set_mobile_base_speed_and_gripper_power(v=0.0, omega=0.0,gripper_power=-1.0, lapse=3.0) 
         print("Close gripper action finish")
 
     def arm_forward(self):
@@ -140,9 +138,9 @@ class action:
         Get the robot, pickup, dropoff, obstacle position in XYZ plane
         """
         poses = self.robot.get_poses()
-        print("Robot position (m): ", poses[0])
-        print("Pickup position (m): ", poses[1])
-        print("Dropoff position (m): ", poses[2])
+        # print("Robot position (m): ", poses[0])
+        # print("Pickup position (m): ", poses[1])
+        # print("Dropoff position (m): ", poses[2])
         # print("Obstacles 1 position (m): ", poses[3])
         # print("Obstacles 2 position (m): ", poses[4])
         # print("Obstacles 3 position (m): ", poses[5])
