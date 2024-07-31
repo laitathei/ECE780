@@ -50,8 +50,11 @@ class MobileManipulatorUnicycleSim:
         p_env = patches.Rectangle(np.array([-self.ENV_SIZE / 2.0, -self.ENV_SIZE / 2.0]), self.ENV_SIZE, self.ENV_SIZE, fill=False)
         p_pu_loc = patches.Circle(np.array(self.pickup_location), radius=self.LOC_RADIUS, facecolor='b')
         p_do_loc = patches.Circle(np.array(self.dropoff_location), radius=self.LOC_RADIUS, facecolor='g')
-        p_o1_loc = patches.Circle(np.array(self.obstacles_location[0]), radius=self.LOC_RADIUS, facecolor='r')
-        p_o2_loc = patches.Circle(np.array(self.obstacles_location[1]), radius=self.LOC_RADIUS, facecolor='r')
+        p_o_loc = []
+        for o in self.obstacles_location:
+            p_o_loc.append(patches.Circle(o, radius=self.LOC_RADIUS, facecolor='r'))
+        # p_o1_loc = patches.Circle(np.array(self.obstacles_location[0]), radius=self.LOC_RADIUS, facecolor='r')
+        # p_o2_loc = patches.Circle(np.array(self.obstacles_location[1]), radius=self.LOC_RADIUS, facecolor='r')
 
         R = np.array([[0.0, 1.0], [-1.0, 0.0]]) @ np.array([[math.cos(self.robot_pose[2]), -math.sin(self.robot_pose[2])], [math.sin(self.robot_pose[2]), math.cos(self.robot_pose[2])]])
         t = np.array([self.robot_pose[0], self.robot_pose[1]])
@@ -60,16 +63,20 @@ class MobileManipulatorUnicycleSim:
         
         self.patches.append(p_pu_loc)
         self.patches.append(p_do_loc)
-        self.patches.append(p_o1_loc)
-        self.patches.append(p_o2_loc)
+        # self.patches.append(p_o1_loc)
+        # self.patches.append(p_o2_loc)
+        for p_o in p_o_loc:
+            self.patches.append(p_o)
         self.patches.append(p_robot)
         self.patches.append(p_gripper)
         
         self.axes.add_patch(p_env)
         self.axes.add_patch(p_pu_loc)
         self.axes.add_patch(p_do_loc)
-        self.axes.add_patch(p_o1_loc)
-        self.axes.add_patch(p_o2_loc)
+        # self.axes.add_patch(p_o1_loc)
+        # self.axes.add_patch(p_o2_loc)
+        for p_o in p_o_loc:
+            self.axes.add_patch(p_o)
         self.axes.add_patch(p_robot)
         self.axes.add_patch(p_gripper)
         
@@ -89,10 +96,14 @@ class MobileManipulatorUnicycleSim:
         
         self.patches[0].center = self.pickup_location
         self.patches[1].center = self.dropoff_location
-        self.patches[2].center = self.obstacles_location[0]
-        self.patches[3].center = self.obstacles_location[1]
-        self.patches[4].xy = xy_robot
-        self.patches[5].xy = xy_gripper
+
+        # self.patches[2].center = self.obstacles_location[0]
+        # self.patches[3].center = self.obstacles_location[1]
+        for i in range(len(self.obstacles_location)):
+            self.patches[i+2].center = self.obstacles_location[i]
+        self.patches[-2].xy = xy_robot
+        self.patches[-1].xy = xy_gripper
+
 
         self.figure.canvas.draw_idle()
         self.figure.canvas.flush_events()

@@ -38,11 +38,11 @@ import numpy as np
 # poses = robot.get_poses()
 # print(f"Robot, pickup, dropoff, obstacles poses: {poses}")
 
-KAPPA = 2
-KAPPA_H = 0.5
+KAPPA = 2.0
+KAPPA_H = 0.1
 KAPPA_DELTA = 1.0
-ALPHA = 1.0
-BETA = 2.0
+ALPHA = 3.0
+BETA = 8.0
 D = 0.1
 L = 0.5
 
@@ -116,17 +116,15 @@ def clf_cbf_control( robot_pose, destination_location, obstacles_location, d_saf
 
     h = np.zeros(n+1)
     h[0] = -ALPHA * (np.linalg.norm(q_diff)**2 + KAPPA * heading_diff**2)
-    h[1:] = BETA * (np.linalg.norm(q_u_diff)**2 - d_safe**2 - KAPPA_H * heading_u_diff**2)
+    h[1:] = BETA * (np.linalg.norm(q_u_diff,axis=0)**2 - d_safe**2 - KAPPA_H * heading_u_diff**2)
 
-    try:
-        u_delta = solve_qp(Q,
-                    np.zeros((3,1)),
-                    G[:,:],
-                    h[:],
-                    solver="cvxopt")
-    except:
-        return  (0.1, 0.1)
-    return u_delta[:2] if u_delta is not None else (0.1, 0.1)
+    u_delta = solve_qp(Q,
+                np.zeros((3,1)),
+                G[:,:],
+                h[:],
+                solver="cvxopt")
+
+    return u_delta[:2]
 
     
 
@@ -136,10 +134,10 @@ if __name__ == "__main__":
 
     robot = MobileManipulatorUnicycleSim(
         robot_id=1, 
-        robot_pose=[2.0,1.0, np.random.uniform(-np.pi, np.pi)], 
+        robot_pose=[2, 3, -np.pi/6], 
         dropoff_location=[2.0,1.0],
         pickup_location=[-4.0, -2.0],
-        obstacles_location=[[-1.0, -0.25], [-0.5, -0.5]]
+        obstacles_location=[[-2.5,-0.5],[-1.5, -0.5], [-0.5, -0.5]]
     )
  
     while True:
